@@ -2,8 +2,10 @@ import { useRef, useState } from "react";
 import Header from "./Header";
 import { checkSignUpForm } from "../utils/validate";
 import { auth } from "../utils/firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth"
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword ,updateProfile} from "firebase/auth"
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addUser } from "../utils/userSlice";
 
 
 const Login = () => {
@@ -11,8 +13,10 @@ const Login = () => {
     const navigate = useNavigate()
     const [error, setError] = useState(null)
     const email = useRef(null);
+    const displayName = useRef(null);
     const password = useRef(null)
-    const name ="Riddhi";
+    const dispatch = useDispatch()
+    const name = "Riddhi";
     const toggleSignInForm = () => {
         setSignInForm(!isSignInForm)
         setError(null);
@@ -37,12 +41,22 @@ const Login = () => {
     }
 
     const signUp = () => {
-        createUserWithEmailAndPassword(auth, email.current.value, password.current.value,name)
+        createUserWithEmailAndPassword(auth, email.current.value, password.current.value, name)
             .then((userCredential) => {
                 // Signed in 
                 const user = userCredential.user;
+                updateProfile(auth.currentUser, {
+                    displayName: displayName.current.value
+                }).then(() => {
+                    const { uid, email, displayName } = auth.currentUser;
+                    dispatch(addUser({ uid: uid, email: email, displayName: displayName }))
+                    // Profile updated!
+                    // ...
+                }).catch((error) => {
+                    // An error occurred
+                    // ...
+                });
                 console.log(user);
-                navigate('/browse')
                 // ...
             })
             .catch((error) => {
@@ -58,7 +72,6 @@ const Login = () => {
             .then((userCredential) => {
                 // Signed in 
                 const user = userCredential.user;
-                navigate('/browse')
                 // ...
             })
             .catch((error) => {
@@ -69,7 +82,7 @@ const Login = () => {
             });
     }
 
- 
+
 
     return (
         <div>
@@ -79,7 +92,7 @@ const Login = () => {
                 <h1 className="font-bold text-3xl py-4">{isSignInForm ? 'Sign In' : 'Sign Up'}</h1>
                 {
                     !isSignInForm && (
-                        <input type="text" placeholder="Full Name" className="p-2 my-2 w-full bg-gray-800"></input>
+                        <input type="text" placeholder="Full Name" ref={displayName} className="p-2 my-2 w-full bg-gray-800"></input>
                     )
                 }
                 <input type="text" placeholder="Email Address" className="p-2 my-2 w-full bg-gray-800" ref={email}></input>
